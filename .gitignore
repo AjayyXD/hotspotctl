@@ -1,0 +1,17 @@
+
+*.d
+
+*.o
+
+hotspotctl
+
+*.conf
+*.log
+
+.vscode/
+.idea/
+*.swp
+*~
+
+.DS_Store
+Thumps.db
