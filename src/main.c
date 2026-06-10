@@ -8,6 +8,7 @@
 #include "hostapd.h"
 #include "dnsmasq.h"
 #include "cli.h"
+#include "firewall.h"
 
 int main(int argc,char* argv[])
 {
@@ -42,9 +43,14 @@ int main(int argc,char* argv[])
         execlp("dnsmasq", "dnsmasq", "--conf-file=/run/hotspotctl/dnsmasq.conf", "--keep-in-foreground", (char *)NULL);
         _exit(1);
     }
+     
+    firewall_enable_forwarding();
+    firewall_setup(cfg.iface,cfg.uplink);
+
 
     wait(NULL);
     wait(NULL);
+    
 
     return 0;
 }

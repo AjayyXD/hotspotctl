@@ -3,7 +3,7 @@ CFLAGS = -Wall -Wextra -g -Iinclude
 
 TARGET = hotspotctl
 
-OBJS = main.o hostapd.o dnsmasq.o cli.o
+OBJS = main.o hostapd.o dnsmasq.o cli.o firewall.o
 
 all: $(TARGET)
 
@@ -21,6 +21,9 @@ dnsmasq.o: src/dnsmasq.c include/hostapd.h
 
 cli.o: src/cli.c include/cli.h include/hostapd.h
 	$(CC) $(CFLAGS) -c src/cli.c
+
+firewall.o: src/firewall.c include/firewall.h
+	$(CC) $(CFLAGS) -c src/firewall.c
 
 clean:
 	rm -f $(OBJS) $(TARGET)

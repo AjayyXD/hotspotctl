@@ -11,13 +11,14 @@ HotspotConfig  get_cli_cfg(int argc,char *argv[]){
     HotspotConfig cfg;
     strcpy(cfg.ssid, "Hotspotctl");
     strcpy(cfg.iface, "wlan0");
+    strcpy(cfg.uplink,"eth0");
     strcpy(cfg.password, "strongpassword");
     cfg.channel = 6;
     cfg.max_clients = 10;
 
     int opt;
 
-    while ((opt = getopt(argc, argv, "i:s:p:c:")) != -1)
+    while ((opt = getopt(argc, argv, "i:s:p:c:u:")) != -1)
     {
         switch (opt)
         {
@@ -33,8 +34,11 @@ HotspotConfig  get_cli_cfg(int argc,char *argv[]){
         case 'c':
             cfg.channel = atoi(optarg);
             break;
+        case 'u' :
+            strncpy(cfg.uplink,optarg,sizeof(cfg.uplink)-1);
+            break;
         default:
-            fprintf(stderr, "Usage: %s [-i interface] [-s ssid] [-p password] [-c channel]\n", argv[0]);
+            fprintf(stderr, "Usage: %s [-i interface] [-s ssid] [-p password] [-c channel] [-u uplink]\n", argv[0]);
             exit(1);
         }
     }
