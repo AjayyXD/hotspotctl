@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -g
+CFLAGS = -Wall -Wextra -g -Iinclude
 
 TARGET = hotspotctl
 
@@ -10,17 +10,17 @@ all: $(TARGET)
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS)
 
-main.o: main.c hostapd.h dnsmasq.h
-	$(CC) $(CFLAGS) -c main.c
+main.o: src/main.c include/hostapd.h include/dnsmasq.h
+	$(CC) $(CFLAGS) -c src/main.c
 
-hostapd.o: hostapd.c hostapd.h
-	$(CC) $(CFLAGS) -c hostapd.c
+hostapd.o: src/hostapd.c include/hostapd.h
+	$(CC) $(CFLAGS) -c src/hostapd.c
 
-dnsmasq.o: dnsmasq.c hostapd.h
-	$(CC) $(CFLAGS) -c dnsmasq.c
+dnsmasq.o: src/dnsmasq.c include/hostapd.h
+	$(CC) $(CFLAGS) -c src/dnsmasq.c
 
-cli.o: cli.c cli.h hostapd.h
-	$(CC) $(CFLAGS) -c cli.c
+cli.o: src/cli.c include/cli.h include/hostapd.h
+	$(CC) $(CFLAGS) -c src/cli.c
 
 clean:
 	rm -f $(OBJS) $(TARGET)
