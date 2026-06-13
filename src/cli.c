@@ -4,6 +4,7 @@
 #include<unistd.h>
 #include<stdlib.h>
 #include "hostapd.h"
+#include "auto.h"
 
 HotspotConfig  get_cli_cfg(int argc,char *argv[]){
 
@@ -18,7 +19,7 @@ HotspotConfig  get_cli_cfg(int argc,char *argv[]){
 
     int opt;
 
-    while ((opt = getopt(argc, argv, "i:s:p:c:u:")) != -1)
+    while ((opt = getopt(argc, argv, "i:s:p:c:u:a")) != -1)
     {
         switch (opt)
         {
@@ -36,6 +37,12 @@ HotspotConfig  get_cli_cfg(int argc,char *argv[]){
             break;
         case 'u' :
             strncpy(cfg.uplink,optarg,sizeof(cfg.uplink)-1);
+            break;
+        case 'a' :
+            if(get_auto_cfg(&cfg)){
+                printf("Some error occurred while auto fetching");
+                exit(1);
+            }
             break;
         default:
             fprintf(stderr, "Usage: %s [-i interface] [-s ssid] [-p password] [-c channel] [-u uplink]\n", argv[0]);
