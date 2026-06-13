@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -10,8 +11,44 @@
 #include "cli.h"
 #include "firewall.h"
 
+int pid1 = -1,pid2 = -1;
+
+void cleanup(){
+
+    static int check = 0;
+    if(check){return;}
+    check = 1;
+
+    if(pid1>0) {kill(pid1,SIGTERM);}
+    if(pid2>0) {kill(pid2,SIGTERM);}
+    firewall_teardown();
+
+}
+
+void handle_signal_interrupt(int signal_number){
+    (void)signal_number;
+
+    exit(0);
+}
+
 int main(int argc,char* argv[])
 {
+    
+    if(atexit(cleanup)!=0){
+        fprintf(stderr,"Failed to clean up\n");
+        return 1;
+    }
+
+    struct sigaction response_action;
+
+    response_action.sa_handler = handle_signal_interrupt;
+    sigemptyset(&response_action.sa_mask);
+
+    response_action.sa_flags = 0;
+
+    sigaction(SIGINT, &response_action, NULL);
+    sigaction(SIGTERM, &response_action, NULL);
+
     HotspotConfig cfg = get_cli_cfg(argc,argv);
 
     //Prepare the Environment
@@ -28,15 +65,15 @@ int main(int argc,char* argv[])
     create_hostapd_conf(&cfg);
     create_dnsmasq_conf(&cfg);
 
-    int pid = fork();
+    pid1 = fork();
 
-    if (pid == 0)
+    if (pid1 == 0)
     {
         execlp("hostapd", "hostapd", "/run/hotspotctl/hostapd.conf", (char *)NULL);
         _exit(1);
     }
 
-    int pid2 = fork();
+    pid2 = fork();
 
     if (pid2 == 0)
     {
