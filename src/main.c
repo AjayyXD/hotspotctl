@@ -14,6 +14,7 @@
 #include "firewall.h"
 
 int pid1 = -1,pid2 = -1;
+char iface[32];
 
 void cleanup(){
 
@@ -24,6 +25,18 @@ void cleanup(){
     if(pid1>0) {kill(pid1,SIGTERM);}
     if(pid2>0) {kill(pid2,SIGTERM);}
     firewall_teardown();
+    char cmd[256];
+    snprintf(cmd, sizeof(cmd), "ip addr flush dev %s", iface);
+    system(cmd);
+    if (system("which nmcli > /dev/null 2>&1") == 0)
+    {
+        snprintf(cmd, sizeof(cmd),"nmcli device set %s managed yes", iface);
+        system(cmd);
+    }
+    system("rm -rf /run/hotspotctl");
+
+    printf("\nRestored system state\n");
+    printf("Terminated hotspotctl\n");
 
 }
 
@@ -52,6 +65,7 @@ int main(int argc,char* argv[])
     sigaction(SIGTERM, &response_action, NULL);
 
     HotspotConfig cfg = get_cli_cfg(argc,argv);
+    strcpy(iface,cfg.iface);
 
     //Prepare the Environment
     char cmd[256];
@@ -71,11 +85,11 @@ int main(int argc,char* argv[])
 
     if (pid1 == 0)
     {
-        int log_f = open("/run/hotspotctl/hostapd.log",O_WRONLY | O_CREAT | O_TRUNC,0644);
-        if(log_f!=-1){
-            dup2(log_f,STDOUT_FILENO);
-            dup2(log_f,STDERR_FILENO);
-            close(log_f);
+        int log_hostapd_f = open("/run/hotspotctl/hostapd.log",O_WRONLY | O_CREAT | O_TRUNC,0644);
+        if(log_hostapd_f!=-1){
+            dup2(log_hostapd_f,STDOUT_FILENO);
+            dup2(log_hostapd_f,STDERR_FILENO);
+            close(log_hostapd_f);
         }
         execlp("hostapd", "hostapd", "/run/hotspotctl/hostapd.conf", (char *)NULL);
         _exit(1);
@@ -85,10 +99,16 @@ int main(int argc,char* argv[])
 
     if (pid2 == 0)
     {
-        execlp("dnsmasq", "dnsmasq", "--conf-file=/run/hotspotctl/dnsmasq.conf", "--keep-in-foreground", (char *)NULL);
+        int log_dnsmasq_f = open("/run/hotspotctl/dnsmasq.log", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+        if (log_dnsmasq_f != -1)
+        {
+            dup2(log_dnsmasq_f, STDOUT_FILENO);
+            dup2(log_dnsmasq_f, STDERR_FILENO);
+            close(log_dnsmasq_f);
+        }
+        execlp("dnsmasq", "dnsmasq", "--conf-file=/run/hotspotctl/dnsmasq.conf", "--keep-in-foreground", "--log-facility=-", (char *)NULL);
         _exit(1);
     }
-     
     firewall_enable_forwarding();
     firewall_setup(cfg.iface,cfg.uplink);
     printf("Created Hotspot Successfully\n");

@@ -3,7 +3,7 @@
 #include "firewall.h"
 
 int firewall_enable_forwarding(){
-    system("sysctl -w net.ipv4.ip_forward=1");
+    system("sysctl -w net.ipv4.ip_forward=1 > /dev/null 2>&1");
     return 0;
 }
 
