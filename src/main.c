@@ -2,10 +2,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#include<signal.h>
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include<fcntl.h>
 #include "hostapd.h"
 #include "dnsmasq.h"
 #include "cli.h"
@@ -69,6 +71,12 @@ int main(int argc,char* argv[])
 
     if (pid1 == 0)
     {
+        int log_f = open("/run/hotspotctl/hostapd.log",O_WRONLY | O_CREAT | O_TRUNC,0644);
+        if(log_f!=-1){
+            dup2(log_f,STDOUT_FILENO);
+            dup2(log_f,STDERR_FILENO);
+            close(log_f);
+        }
         execlp("hostapd", "hostapd", "/run/hotspotctl/hostapd.conf", (char *)NULL);
         _exit(1);
     }
@@ -83,6 +91,9 @@ int main(int argc,char* argv[])
      
     firewall_enable_forwarding();
     firewall_setup(cfg.iface,cfg.uplink);
+    printf("Created Hotspot Successfully\n");
+    printf("Connection Name : %s\n",cfg.ssid);
+    printf("Password : %s\n",cfg.password);
 
 
     wait(NULL);
