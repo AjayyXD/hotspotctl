@@ -19,6 +19,18 @@ HotspotConfig  get_cli_cfg(int argc,char *argv[]){
 
     int opt;
 
+    //Check if no flags
+    if(argc<2){
+        printf("[*] No configuration flags provided. Running automatic setup...\n");
+        if (get_auto_cfg(&cfg))
+        {
+            fprintf(stderr,"[-] Unable to auto fetch\n");
+            exit(1);
+        }
+        return cfg;
+    }
+
+    //Parse the arguments
     while ((opt = getopt(argc, argv, "i:s:p:c:u:a")) != -1)
     {
         switch (opt)
@@ -40,12 +52,12 @@ HotspotConfig  get_cli_cfg(int argc,char *argv[]){
             break;
         case 'a' :
             if(get_auto_cfg(&cfg)){
-                printf("Some error occurred while auto fetching");
+                fprintf(stderr,"[-] Some error occurred while auto fetching");
                 exit(1);
             }
             break;
         default:
-            fprintf(stderr, "Usage: %s [-i interface] [-s ssid] [-p password] [-c channel] [-u uplink]\n", argv[0]);
+            fprintf(stderr, "[*] Usage: %s [-i interface] [-s ssid] [-p password] [-c channel] [-u uplink]\n", argv[0]);
             exit(1);
         }
     }

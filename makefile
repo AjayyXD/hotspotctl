@@ -30,3 +30,9 @@ auto.o: src/auto.c include/auto.h include/hostapd.h
 
 clean:
 	rm -f $(OBJS) $(TARGET)
+
+install:
+	install -Dm755 hotspotctl /usr/bin/hotspotctl
+
+uninstall:
+	rm -f /usr/bin/hotspotctl

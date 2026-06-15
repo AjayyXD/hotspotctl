@@ -48,22 +48,27 @@ void handle_signal_interrupt(int signal_number){
 
 int main(int argc,char* argv[])
 {
-    
+    //Check for root access
+    if(geteuid() != 0){
+        fprintf(stderr,"Hotspotctl requires root privilages.\n");
+        fprintf(stderr,"Please run it again using : sudo %s\n",argv[0]);
+        return 1;
+    }
+
+    //Handle program exit
     if(atexit(cleanup)!=0){
         fprintf(stderr,"Failed to clean up\n");
         return 1;
     }
 
     struct sigaction response_action;
-
     response_action.sa_handler = handle_signal_interrupt;
     sigemptyset(&response_action.sa_mask);
-
     response_action.sa_flags = 0;
-
     sigaction(SIGINT, &response_action, NULL);
     sigaction(SIGTERM, &response_action, NULL);
-
+    
+    //Prepare configuration
     HotspotConfig cfg = get_cli_cfg(argc,argv);
     strcpy(iface,cfg.iface);
 
@@ -78,11 +83,17 @@ int main(int argc,char* argv[])
     system(cmd);
     snprintf(cmd,sizeof(cmd),"ip addr add 192.168.42.1/24 dev %s",cfg.iface);
     system(cmd);
-    create_hostapd_conf(&cfg);
-    create_dnsmasq_conf(&cfg);
+    if(create_hostapd_conf(&cfg)){
+        fprintf(stderr,"An error occured while creating hostapd.conf\n");
+        exit(1);
+    }
+    if(create_dnsmasq_conf(&cfg)){
+        fprintf(stderr,"An error occured while creating dnsmasq.conf\n");
+        exit(1);
+    }
 
+    //Bringing up Access Point
     pid1 = fork();
-
     if (pid1 == 0)
     {
         int log_hostapd_f = open("/run/hotspotctl/hostapd.log",O_WRONLY | O_CREAT | O_TRUNC,0644);
@@ -94,9 +105,10 @@ int main(int argc,char* argv[])
         execlp("hostapd", "hostapd", "/run/hotspotctl/hostapd.conf", (char *)NULL);
         _exit(1);
     }
+    
 
+    //Bringing up DNS and DHCP
     pid2 = fork();
-
     if (pid2 == 0)
     {
         int log_dnsmasq_f = open("/run/hotspotctl/dnsmasq.log", O_WRONLY | O_CREAT | O_TRUNC, 0644);
@@ -109,13 +121,18 @@ int main(int argc,char* argv[])
         execlp("dnsmasq", "dnsmasq", "--conf-file=/run/hotspotctl/dnsmasq.conf", "--keep-in-foreground", "--log-facility=-", (char *)NULL);
         _exit(1);
     }
+
+
+    //Setup routing
     firewall_enable_forwarding();
     firewall_setup(cfg.iface,cfg.uplink);
+
+    //Success message
     printf("Created Hotspot Successfully\n");
     printf("Connection Name : %s\n",cfg.ssid);
     printf("Password : %s\n",cfg.password);
 
-
+    //Keeping parent process alive while children processes still exist
     wait(NULL);
     wait(NULL);
     
