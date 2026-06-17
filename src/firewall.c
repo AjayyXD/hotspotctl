@@ -9,7 +9,7 @@ int firewall_enable_forwarding(){
 
 int firewall_setup(char *iface,char *uplink){
 
-    system("nft add table ip hotspotctl_nat");
+    system("nft add table ip hotspotctl_nat > /dev/null 2>&1");
     system("nft add table ip hotspotctl_filter");
     system("nft add chain ip hotspotctl_nat postrouting { type nat hook postrouting priority 100 \\; }");
     char cmd[256];

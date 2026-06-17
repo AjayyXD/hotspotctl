@@ -8,6 +8,8 @@ typedef struct
     char password[64];
     char iface[32];
     char uplink[32];
+    char hw_mode[64];
+    char ht_capab[64];
     int channel;
     int max_clients;
 } HotspotConfig;

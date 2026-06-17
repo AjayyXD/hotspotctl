@@ -106,7 +106,7 @@ int main(int argc,char* argv[])
         _exit(1);
     }
     
-
+    sleep(2);
     //Bringing up DNS and DHCP
     pid2 = fork();
     if (pid2 == 0)

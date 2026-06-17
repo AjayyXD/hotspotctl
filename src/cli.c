@@ -16,6 +16,8 @@ HotspotConfig  get_cli_cfg(int argc,char *argv[]){
     strcpy(cfg.password, "strongpassword");
     cfg.channel = 6;
     cfg.max_clients = 10;
+    strcpy(cfg.hw_mode,"g");
+    strcpy(cfg.ht_capab,"");
 
     int opt;
 
@@ -31,7 +33,7 @@ HotspotConfig  get_cli_cfg(int argc,char *argv[]){
     }
 
     //Parse the arguments
-    while ((opt = getopt(argc, argv, "i:s:p:c:u:a")) != -1)
+    while ((opt = getopt(argc, argv, "b:i:s:p:c:u:a")) != -1)
     {
         switch (opt)
         {
@@ -54,6 +56,28 @@ HotspotConfig  get_cli_cfg(int argc,char *argv[]){
             if(get_auto_cfg(&cfg)){
                 fprintf(stderr,"[-] Some error occurred while auto fetching");
                 exit(1);
+            }
+            break;
+        case 'b' :
+            char hw_mode[4];
+            strncpy(hw_mode,optarg,sizeof(hw_mode)-1);
+            if(strcmp(hw_mode,"a")==0){
+                if(support_5g()){
+                strcpy(cfg.hw_mode,"a");
+                strcpy(cfg.ht_capab, "ht_capab=[HT40-]");
+                cfg.channel = 48;
+                }else{
+                    fprintf(stderr,"Network card does not support 5GHz, Reverting back to 2.4GHz\n");
+                }
+            }else if(strcmp(hw_mode,"g")==0){
+                cfg.channel = 6;
+                strcpy(cfg.hw_mode,"g");
+                strcpy(cfg.ht_capab,"");
+            }else{
+                fprintf(stderr,"Invalid -b flag, using 2.4GHz as default\n");
+                cfg.channel = 6;
+                strcpy(cfg.hw_mode, "g");
+                strcpy(cfg.ht_capab, "");
             }
             break;
         default:
