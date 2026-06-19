@@ -76,8 +76,11 @@ int main(int argc,char* argv[])
     char cmd[256];
     snprintf(cmd,sizeof(cmd),"ip link set %s up",cfg.iface); 
     system(cmd);
-    snprintf(cmd,sizeof(cmd),"nmcli device set %s managed no",cfg.iface);
-    system(cmd);
+    if (system("which nmcli > /dev/null 2>&1") == 0)
+    {
+        snprintf(cmd, sizeof(cmd), "nmcli device set %s managed no", iface);
+        system(cmd);
+    }
     sleep(1);
     snprintf(cmd,sizeof(cmd),"ip addr flush dev %s",cfg.iface);
     system(cmd);

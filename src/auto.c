@@ -43,18 +43,20 @@ int get_auto_cfg(HotspotConfig *cfg){
             cfg->uplink[sizeof(cfg->uplink) - 1] = '\0';
         }
 
-        if (support_5g())
-        {
-            strcpy(cfg->hw_mode, "a");
-            strcpy(cfg->ht_capab, "ht_capab=[HT40-]");
-            cfg->channel = 48;
-        }
-        else
-        {
-            fprintf(stderr,"5GHz not supported, using 2.4GHz instead\n");
-            strcpy(cfg->ht_capab, "g");
-            strcpy(cfg->ht_capab, "");
-        }
+        
+    }
+
+    if (support_5g())
+    {
+        strcpy(cfg->hw_mode, "a");
+        strcpy(cfg->ht_capab, "ht_capab=[HT40-]");
+        cfg->channel = 48;
+    }
+    else
+    {
+        fprintf(stderr, "5GHz not supported, using 2.4GHz instead\n");
+        strcpy(cfg->hw_mode, "g");
+        strcpy(cfg->hw_mode, "");
     }
     pclose(f);
     return 0;
