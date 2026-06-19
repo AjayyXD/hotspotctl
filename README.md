@@ -35,7 +35,7 @@ sudo pacman -S hostapd dnsmasq nftables iproute2
 
 **Build and install**
 ```bash
-git clone https://github.com/yourusername/hotspotctl
+git clone https://github.com/AjayyXD/hotspotctl
 cd hotspotctl
 make
 sudo make install
