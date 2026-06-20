@@ -52,7 +52,7 @@ int prepare_environment(HotspotConfig cfg){
     system(cmd);
     if (system("which nmcli > /dev/null 2>&1") == 0)
     {
-        snprintf(cmd, sizeof(cmd), "nmcli device set %s managed no", iface);
+        snprintf(cmd, sizeof(cmd), "nmcli device set %s managed no", cfg.iface);
         system(cmd);
     }
     sleep(1);
@@ -73,7 +73,7 @@ int main(int argc,char* argv[])
 {
     //Check for root access
     if(geteuid() != 0){
-        fprintf(stderr,"Hotspotctl requires root privilages.\n");
+        fprintf(stderr,"Hotspotctl requires root privileges.\n");
         fprintf(stderr,"Please run it again using : sudo %s\n",argv[0]);
         return 1;
     }
@@ -101,11 +101,11 @@ int main(int argc,char* argv[])
     }
     
     if(create_hostapd_conf(&cfg)){
-        fprintf(stderr,"An error occured while creating hostapd.conf\n");
+        fprintf(stderr,"An error occurred while creating hostapd.conf\n");
         exit(1);
     }
     if(create_dnsmasq_conf(&cfg)){
-        fprintf(stderr,"An error occured while creating dnsmasq.conf\n");
+        fprintf(stderr,"An error occurred while creating dnsmasq.conf\n");
         exit(1);
     }
 

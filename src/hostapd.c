@@ -16,6 +16,10 @@ int create_hostapd_conf(HotspotConfig *cfg){
                 return 1;
         }
         FILE *f = fopen("/run/hotspotctl/hostapd.conf","w");
+        if(f==NULL){
+                perror("could not open hostapd.conf");
+                return 1;
+        }
         fprintf(f, "interface=%s\n"
                    "driver=nl80211\n"
                    "ssid=%s\n"

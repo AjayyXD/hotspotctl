@@ -56,7 +56,8 @@ int get_auto_cfg(HotspotConfig *cfg){
     {
         fprintf(stderr, "5GHz not supported, using 2.4GHz instead\n");
         strcpy(cfg->hw_mode, "g");
-        strcpy(cfg->hw_mode, "");
+        strcpy(cfg->ht_capab, "");
+        cfg->channel = 6;
     }
     pclose(f);
     return 0;
