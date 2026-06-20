@@ -6,6 +6,14 @@
 #include "hostapd.h"
 #include "auto.h"
 
+void channel_error(){
+    fprintf(stderr, "[-] Error : Hotspotctl only supports universally safe channels.\n");
+    fprintf(stderr, "    Please choose a clean channel to prevent interference or crashes\n");
+    fprintf(stderr, "    -> For 2.4GHz : 1, 6, 11\n");
+    fprintf(stderr, "    -> For 5.0GHz : 36, 40, 44, 48\n");
+    exit(1);
+}
+
 HotspotConfig  get_cli_cfg(int argc,char *argv[]){
 
     // Initialize Default Values
@@ -83,6 +91,16 @@ HotspotConfig  get_cli_cfg(int argc,char *argv[]){
         default:
             fprintf(stderr, "[*] Usage: %s [-i interface] [-s ssid] [-p password] [-c channel] [-u uplink]\n", argv[0]);
             exit(1);
+        }
+    }
+
+    if(strcmp(cfg.hw_mode,"g")==0){
+        if(cfg.channel!=1 && cfg.channel!=6 && cfg.channel!=11){
+            channel_error();
+        }
+    }else{
+        if(cfg.channel!=36 && cfg.channel!=40 && cfg.channel!= 44 && cfg.channel!= 48){
+            channel_error();
         }
     }
     return cfg;
