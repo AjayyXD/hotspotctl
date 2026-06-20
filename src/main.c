@@ -15,6 +15,8 @@
 
 int pid1 = -1,pid2 = -1;
 char iface[32];
+int modified_env = 0;
+int activated_firewall = 0;
 
 void cleanup(){
 
@@ -24,20 +26,41 @@ void cleanup(){
 
     if(pid1>0) {kill(pid1,SIGTERM);}
     if(pid2>0) {kill(pid2,SIGTERM);}
-    firewall_teardown();
+    if(activated_firewall){
+        firewall_teardown();
+    }
     char cmd[256];
-    snprintf(cmd, sizeof(cmd), "ip addr flush dev %s", iface);
-    system(cmd);
-    if (system("which nmcli > /dev/null 2>&1") == 0)
-    {
-        snprintf(cmd, sizeof(cmd),"nmcli device set %s managed yes", iface);
+    if(modified_env){
+        snprintf(cmd, sizeof(cmd), "ip addr flush dev %s", iface);
         system(cmd);
+        if (system("which nmcli > /dev/null 2>&1") == 0)
+        {
+            snprintf(cmd, sizeof(cmd),"nmcli device set %s managed yes", iface);
+            system(cmd);
+        }
     }
     system("rm -rf /run/hotspotctl");
 
     printf("\nRestored system state\n");
     printf("Terminated hotspotctl\n");
 
+}
+
+int prepare_environment(HotspotConfig cfg){
+    char cmd[256];
+    snprintf(cmd, sizeof(cmd), "ip link set %s up", cfg.iface);
+    system(cmd);
+    if (system("which nmcli > /dev/null 2>&1") == 0)
+    {
+        snprintf(cmd, sizeof(cmd), "nmcli device set %s managed no", iface);
+        system(cmd);
+    }
+    sleep(1);
+    snprintf(cmd, sizeof(cmd), "ip addr flush dev %s", cfg.iface);
+    system(cmd);
+    snprintf(cmd, sizeof(cmd), "ip addr add 192.168.42.1/24 dev %s", cfg.iface);
+    system(cmd);
+    return 0;
 }
 
 void handle_signal_interrupt(int signal_number){
@@ -72,20 +95,11 @@ int main(int argc,char* argv[])
     HotspotConfig cfg = get_cli_cfg(argc,argv);
     strcpy(iface,cfg.iface);
 
-    //Prepare the Environment
-    char cmd[256];
-    snprintf(cmd,sizeof(cmd),"ip link set %s up",cfg.iface); 
-    system(cmd);
-    if (system("which nmcli > /dev/null 2>&1") == 0)
-    {
-        snprintf(cmd, sizeof(cmd), "nmcli device set %s managed no", iface);
-        system(cmd);
+    //Flag altered env
+    if(prepare_environment(cfg)==0){
+        modified_env = 1;
     }
-    sleep(1);
-    snprintf(cmd,sizeof(cmd),"ip addr flush dev %s",cfg.iface);
-    system(cmd);
-    snprintf(cmd,sizeof(cmd),"ip addr add 192.168.42.1/24 dev %s",cfg.iface);
-    system(cmd);
+    
     if(create_hostapd_conf(&cfg)){
         fprintf(stderr,"An error occured while creating hostapd.conf\n");
         exit(1);
@@ -127,7 +141,10 @@ int main(int argc,char* argv[])
 
 
     //Setup routing
-    firewall_enable_forwarding();
+
+    if(firewall_enable_forwarding()==0){
+        activated_firewall = 1;
+    }
     firewall_setup(cfg.iface,cfg.uplink);
 
     //Success message
