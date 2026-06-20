@@ -52,6 +52,13 @@ HotspotConfig  get_cli_cfg(int argc,char *argv[]){
             strncpy(cfg.ssid, optarg, sizeof(cfg.ssid) - 1);
             break;
         case 'p':
+            if(strlen(optarg)<8){
+                fprintf(stderr,"[-] Entered password must contain atleast 8 characters\n");
+                exit(1);
+            }else if(strlen(optarg)>63){
+                fprintf(stderr,"[-] Entered password must contain less than 64 characters\n");
+                exit(1);
+            }
             strncpy(cfg.password, optarg, sizeof(cfg.password) - 1);
             break;
         case 'c':
