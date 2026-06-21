@@ -52,7 +52,7 @@ sudo hotspotctl -a
 
 **Manual mode — full control:**
 ```bash
-sudo hotspotctl -i wlp8s0 -u enp7s0 -s MyWifi -p mypassword -c 36 -b a
+sudo hotspotctl -m -i wlp8s0 -u enp7s0 -s MyWifi -p mypassword -c 36 -b a
 ```
 
 **Stop:** `Ctrl+C` — system is fully restored.
@@ -63,6 +63,7 @@ sudo hotspotctl -i wlp8s0 -u enp7s0 -s MyWifi -p mypassword -c 36 -b a
 
 ```
   -a          auto detect interfaces and band
+  -m          manual mode (all flags with values must be provided)
   -i <iface>  WiFi interface        (e.g. wlp8s0)
   -u <iface>  uplink interface      (e.g. enp7s0)
   -s <ssid>   network name          (e.g. MyWifi)

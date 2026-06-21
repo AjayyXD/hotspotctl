@@ -14,6 +14,100 @@ void channel_error(){
     exit(1);
 }
 
+int cli_parse(HotspotConfig *cfg, int argc,char *argv[]){
+
+    int shifted_argc = argc - 2;
+    char **shifted_argv = argv + 2;
+    int opt;
+
+    if(strcmp(argv[1],"-a")==0){
+        if(get_auto_cfg(cfg)){
+            fprintf(stderr, "[-] Some error occurred while auto fetching");
+            exit(1);
+        }
+    }else if(strcmp(argv[1],"-m")==0){
+        if(shifted_argc<6){
+            fprintf(stderr,"[-] Error : Not enough arguments for manual mode\n");
+            fprintf(stderr,"[*] Use -a flag for automatic detection followed by other flags if needed to specify any value\n");
+            exit(1);
+        }
+    }else{
+        fprintf(stderr,"[-] Error : The first flag must be -a or -m\n");
+        exit(1);
+    }
+    opterr = 0;
+    while ((opt = getopt(shifted_argc, shifted_argv, "b:i:s:p:c:u:")) != -1)
+    {
+        switch (opt)
+        {
+        case 'i':
+            strncpy(cfg->iface, optarg, sizeof(cfg->iface) - 1);
+            break;
+        case 's':
+            strncpy(cfg->ssid, optarg, sizeof(cfg->ssid) - 1);
+            break;
+        case 'p':
+            if (strlen(optarg) < 8)
+            {
+                fprintf(stderr, "[-] Entered password must contain at least 8 characters\n");
+                exit(1);
+            }
+            else if (strlen(optarg) > 63)
+            {
+                fprintf(stderr, "[-] Entered password must contain less than 64 characters\n");
+                exit(1);
+            }
+            strncpy(cfg->password, optarg, sizeof(cfg->password) - 1);
+            break;
+        case 'c':
+            cfg->channel = atoi(optarg);
+            break;
+        case 'u':
+            strncpy(cfg->uplink, optarg, sizeof(cfg->uplink) - 1);
+            break;
+        case 'b':
+            char hw_mode[4];
+            strncpy(hw_mode, optarg, sizeof(hw_mode) - 1);
+            if (strcmp(hw_mode, "a") == 0)
+            {
+                if (support_5g())
+                {
+                    strcpy(cfg->hw_mode, "a");
+                    strcpy(cfg->ht_capab, "ht_capab=[HT40-]");
+                    cfg->channel = 48;
+                }
+                else
+                {
+                    fprintf(stderr, "Network card does not support 5GHz, Reverting back to 2.4GHz\n");
+                }
+            }
+            else if (strcmp(hw_mode, "g") == 0)
+            {
+                cfg->channel = 6;
+                strcpy(cfg->hw_mode, "g");
+                strcpy(cfg->ht_capab, "");
+            }
+            else
+            {
+                fprintf(stderr, "Invalid -b flag, using 2.4GHz as default\n");
+                cfg->channel = 6;
+                strcpy(cfg->hw_mode, "g");
+                strcpy(cfg->ht_capab, "");
+            }
+            break;
+        case '?':
+            fprintf(stderr, "[-] Error : Unknown flag\n");
+            fprintf(stderr, "[*] Usage: %s [-a/-m] [-i interface] [-s ssid] [-p password] [-c channel] [-b band] [-u uplink]\n", argv[0]);
+            fprintf(stderr, "[*] Example: %s -a -s MyWifi -p mypassword\n", argv[0]);
+            fprintf(stderr, "[*] Example: %s -m -i wlp8s0 -u enp7s0 -s MyWifi -p mypassword\n", argv[0]);
+            exit(1);
+        default :
+            exit(1);
+        }
+    }
+    return 0;
+}
+
 HotspotConfig  get_cli_cfg(int argc,char *argv[]){
 
     // Initialize Default Values
@@ -27,7 +121,6 @@ HotspotConfig  get_cli_cfg(int argc,char *argv[]){
     strcpy(cfg.hw_mode,"g");
     strcpy(cfg.ht_capab,"");
 
-    int opt;
 
     //Check if no flags
     if(argc<2){
@@ -41,65 +134,11 @@ HotspotConfig  get_cli_cfg(int argc,char *argv[]){
     }
 
     //Parse the arguments
-    while ((opt = getopt(argc, argv, "b:i:s:p:c:u:a")) != -1)
-    {
-        switch (opt)
-        {
-        case 'i':
-            strncpy(cfg.iface, optarg, sizeof(cfg.iface) - 1);
-            break;
-        case 's':
-            strncpy(cfg.ssid, optarg, sizeof(cfg.ssid) - 1);
-            break;
-        case 'p':
-            if(strlen(optarg)<8){
-                fprintf(stderr,"[-] Entered password must contain at least 8 characters\n");
-                exit(1);
-            }else if(strlen(optarg)>63){
-                fprintf(stderr,"[-] Entered password must contain less than 64 characters\n");
-                exit(1);
-            }
-            strncpy(cfg.password, optarg, sizeof(cfg.password) - 1);
-            break;
-        case 'c':
-            cfg.channel = atoi(optarg);
-            break;
-        case 'u' :
-            strncpy(cfg.uplink,optarg,sizeof(cfg.uplink)-1);
-            break;
-        case 'a' :
-            if(get_auto_cfg(&cfg)){
-                fprintf(stderr,"[-] Some error occurred while auto fetching");
-                exit(1);
-            }
-            break;
-        case 'b' :
-            char hw_mode[4];
-            strncpy(hw_mode,optarg,sizeof(hw_mode)-1);
-            if(strcmp(hw_mode,"a")==0){
-                if(support_5g()){
-                strcpy(cfg.hw_mode,"a");
-                strcpy(cfg.ht_capab, "ht_capab=[HT40-]");
-                cfg.channel = 48;
-                }else{
-                    fprintf(stderr,"Network card does not support 5GHz, Reverting back to 2.4GHz\n");
-                }
-            }else if(strcmp(hw_mode,"g")==0){
-                cfg.channel = 6;
-                strcpy(cfg.hw_mode,"g");
-                strcpy(cfg.ht_capab,"");
-            }else{
-                fprintf(stderr,"Invalid -b flag, using 2.4GHz as default\n");
-                cfg.channel = 6;
-                strcpy(cfg.hw_mode, "g");
-                strcpy(cfg.ht_capab, "");
-            }
-            break;
-        default:
-            fprintf(stderr, "[*] Usage: %s [-i interface] [-s ssid] [-p password] [-c channel] [-u uplink]\n", argv[0]);
-            exit(1);
-        }
+    if(cli_parse(&cfg,argc,argv)){
+        fprintf(stderr,"[-] Error : Some error occurred while parsing the command\n");
+        exit(1);
     }
+    
 
     if(strcmp(cfg.hw_mode,"g")==0){
         if(cfg.channel!=1 && cfg.channel!=6 && cfg.channel!=11){
