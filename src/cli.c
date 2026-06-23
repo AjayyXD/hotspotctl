@@ -16,8 +16,8 @@ void channel_error(){
 
 int cli_parse(HotspotConfig *cfg, int argc,char *argv[]){
 
-    int shifted_argc = argc - 2;
-    char **shifted_argv = argv + 2;
+    int shifted_argc = argc - 1;
+    char **shifted_argv = argv + 1;
     int opt;
 
     if(strcmp(argv[1],"-a")==0){
@@ -26,7 +26,7 @@ int cli_parse(HotspotConfig *cfg, int argc,char *argv[]){
             exit(1);
         }
     }else if(strcmp(argv[1],"-m")==0){
-        if(shifted_argc<6){
+        if(shifted_argc<7){
             fprintf(stderr,"[-] Error : Not enough arguments for manual mode\n");
             fprintf(stderr,"[*] Use -a flag for automatic detection followed by other flags if needed to specify any value\n");
             exit(1);
@@ -36,7 +36,7 @@ int cli_parse(HotspotConfig *cfg, int argc,char *argv[]){
         exit(1);
     }
     opterr = 0;
-    while ((opt = getopt(shifted_argc, shifted_argv, "b:i:s:p:c:u:")) != -1)
+    while ((opt = getopt(shifted_argc, shifted_argv, "b:i:s:p:c:u:r:")) != -1)
     {
         switch (opt)
         {
@@ -95,12 +95,19 @@ int cli_parse(HotspotConfig *cfg, int argc,char *argv[]){
                 strcpy(cfg->ht_capab, "");
             }
             break;
-        case '?':
-            fprintf(stderr, "[-] Error : Unknown flag\n");
-            fprintf(stderr, "[*] Usage: %s [-a/-m] [-i interface] [-s ssid] [-p password] [-c channel] [-b band] [-u uplink]\n", argv[0]);
-            fprintf(stderr, "[*] Example: %s -a -s MyWifi -p mypassword\n", argv[0]);
-            fprintf(stderr, "[*] Example: %s -m -i wlp8s0 -u enp7s0 -s MyWifi -p mypassword\n", argv[0]);
-            exit(1);
+            case 'r':
+                if(strlen(optarg)!=2){
+                    fprintf(stderr,"[-] Error : Invalid country code\n");
+                    exit(1);
+                }
+                strncpy(cfg->country_code, optarg, sizeof(cfg->country_code) - 1);
+                break;
+            case '?':
+                fprintf(stderr, "[-] Error : Unknown flag\n");
+                fprintf(stderr, "[*] Usage: %s [-a/-m] [-i interface] [-s ssid] [-p password] [-r region/country code][-c channel] [-b band] [-u uplink]\n", argv[0]);
+                fprintf(stderr, "[*] Example: %s -a -s MyWifi -p mypassword\n", argv[0]);
+                fprintf(stderr, "[*] Example: %s -m -i wlp8s0 -u enp7s0 -s MyWifi -p mypassword -b a -c 48 -r IN\n", argv[0]);
+                exit(1);
         default :
             exit(1);
         }
@@ -116,6 +123,7 @@ HotspotConfig  get_cli_cfg(int argc,char *argv[]){
     strcpy(cfg.iface, "wlan0");
     strcpy(cfg.uplink,"eth0");
     strcpy(cfg.password, "strongpassword");
+    strcpy(cfg.country_code,"IN");
     cfg.channel = 6;
     cfg.max_clients = 10;
     strcpy(cfg.hw_mode,"g");

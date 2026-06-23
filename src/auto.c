@@ -27,6 +27,19 @@ int support_5g()
     return 0;
 }
 
+int get_country_code (HotspotConfig* cfg){
+    FILE* f = popen("iw reg get | grep country","r");
+    char buffer[128];
+    char dummy[64];
+    if(fgets(buffer,sizeof(buffer),f)!=NULL){
+        if(sscanf(buffer,"%s %2s",dummy,cfg->country_code)!=2){
+            fprintf(stderr,"[-] Error , Could not auto fetch country code\n");
+            exit(1);
+        }
+    }
+    return 0;
+}
+
 int get_auto_cfg(HotspotConfig *cfg){
     FILE *f = popen("ls /sys/class/net","r");
     char buffer[256];
@@ -58,6 +71,11 @@ int get_auto_cfg(HotspotConfig *cfg){
         strcpy(cfg->hw_mode, "g");
         strcpy(cfg->ht_capab, "");
         cfg->channel = 6;
+    }
+
+    if(get_country_code(cfg)){
+        fprintf(stderr,"[-] Error , Could not auto fetch country code\n");
+        exit(1);
     }
     pclose(f);
     return 0;

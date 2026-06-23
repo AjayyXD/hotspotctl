@@ -23,7 +23,7 @@ int create_hostapd_conf(HotspotConfig *cfg){
         fprintf(f, "interface=%s\n"
                    "driver=nl80211\n"
                    "ssid=%s\n"
-                   "country_code=IN\n"
+                   "country_code=%s\n"
                    "hw_mode=%s\n"
                    "channel=%d\n"
                    "ieee80211n=1\n"
@@ -36,7 +36,7 @@ int create_hostapd_conf(HotspotConfig *cfg){
                    "wpa_passphrase=%s\n"
                    "max_num_sta=%d\n"
                    "logger_stdout=-1\n"
-                   "logger_stdout_level=2\n",cfg->iface,cfg->ssid,cfg->hw_mode,cfg->channel,cfg->ht_capab,cfg->password,cfg->max_clients);
+                   "logger_stdout_level=2\n",cfg->iface,cfg->ssid,cfg->country_code,cfg->hw_mode,cfg->channel,cfg->ht_capab,cfg->password,cfg->max_clients);
         fclose(f);
         return 0;
 }

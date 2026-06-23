@@ -10,6 +10,7 @@ typedef struct
     char uplink[32];
     char hw_mode[64];
     char ht_capab[64];
+    char country_code[8];
     int channel;
     int max_clients;
 } HotspotConfig;
