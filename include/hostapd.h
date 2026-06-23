@@ -13,6 +13,7 @@ typedef struct
     char country_code[8];
     int channel;
     int max_clients;
+    int debug_mode;
 } HotspotConfig;
 
 

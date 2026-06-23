@@ -113,11 +113,13 @@ int main(int argc,char* argv[])
     pid1 = fork();
     if (pid1 == 0)
     {
-        int log_hostapd_f = open("/run/hotspotctl/hostapd.log",O_WRONLY | O_CREAT | O_TRUNC,0644);
-        if(log_hostapd_f!=-1){
-            dup2(log_hostapd_f,STDOUT_FILENO);
-            dup2(log_hostapd_f,STDERR_FILENO);
-            close(log_hostapd_f);
+        if(!cfg.debug_mode){
+            int log_hostapd_f = open("/run/hotspotctl/hostapd.log",O_WRONLY | O_CREAT | O_TRUNC,0644);
+            if(log_hostapd_f!=-1){
+                dup2(log_hostapd_f,STDOUT_FILENO);
+                dup2(log_hostapd_f,STDERR_FILENO);
+                close(log_hostapd_f);
+            }    
         }
         execlp("hostapd", "hostapd", "/run/hotspotctl/hostapd.conf", (char *)NULL);
         _exit(1);
@@ -128,12 +130,14 @@ int main(int argc,char* argv[])
     pid2 = fork();
     if (pid2 == 0)
     {
-        int log_dnsmasq_f = open("/run/hotspotctl/dnsmasq.log", O_WRONLY | O_CREAT | O_TRUNC, 0644);
-        if (log_dnsmasq_f != -1)
-        {
-            dup2(log_dnsmasq_f, STDOUT_FILENO);
-            dup2(log_dnsmasq_f, STDERR_FILENO);
-            close(log_dnsmasq_f);
+        if(!cfg.debug_mode){
+            int log_dnsmasq_f = open("/run/hotspotctl/dnsmasq.log", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+            if (log_dnsmasq_f != -1)
+            {
+                dup2(log_dnsmasq_f, STDOUT_FILENO);
+                dup2(log_dnsmasq_f, STDERR_FILENO);
+                close(log_dnsmasq_f);
+            }
         }
         execlp("dnsmasq", "dnsmasq", "--conf-file=/run/hotspotctl/dnsmasq.conf", "--keep-in-foreground", "--log-facility=-", (char *)NULL);
         _exit(1);
