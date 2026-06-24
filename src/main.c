@@ -41,8 +41,8 @@ void cleanup(){
     }
     system("rm -rf /run/hotspotctl");
 
-    printf("\nRestored system state\n");
-    printf("Terminated hotspotctl\n");
+    printf("\n[*] Restored system state\n");
+    printf("[*] Terminated hotspotctl\n");
 
 }
 
@@ -90,6 +90,7 @@ int main(int argc,char* argv[])
     response_action.sa_flags = 0;
     sigaction(SIGINT, &response_action, NULL);
     sigaction(SIGTERM, &response_action, NULL);
+    sigaction(SIGHUP, &response_action,NULL);
     
     //Prepare configuration
     HotspotConfig cfg = get_cli_cfg(argc,argv);
@@ -152,9 +153,9 @@ int main(int argc,char* argv[])
     firewall_setup(cfg.iface,cfg.uplink);
 
     //Success message
-    printf("Created Hotspot Successfully\n");
-    printf("Connection Name : %s\n",cfg.ssid);
-    printf("Password : %s\n",cfg.password);
+    printf("[*] Created Hotspot Successfully\n");
+    printf("[*] Connection Name : %s\n",cfg.ssid);
+    printf("[*] Password : %s\n",cfg.password);
 
     //Keeping parent process alive while children processes still exist
     wait(NULL);

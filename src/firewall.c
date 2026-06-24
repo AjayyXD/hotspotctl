@@ -11,7 +11,9 @@ int firewall_setup(char *iface,char *uplink){
 
     system("nft add table ip hotspotctl_nat > /dev/null 2>&1");
     system("nft add table ip hotspotctl_filter > /dev/null 2>&1");
-    system("nft add chain ip hotspotctl_nat postrouting { type nat hook postrouting priority 100 \\; }");
+    system("nft add chain ip hotspotctl_nat postrouting "
+           "{ type nat hook postrouting priority 100 \\; } "
+           "> /dev/null 2>&1");
     char cmd[256];
     snprintf(cmd, sizeof(cmd), "nft add rule ip hotspotctl_nat postrouting oifname \"%s\" masquerade",uplink);
     system(cmd);

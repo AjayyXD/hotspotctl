@@ -52,7 +52,7 @@ sudo hotspotctl -a
 
 **Manual mode — full control:**
 ```bash
-sudo hotspotctl -m -i wlp8s0 -u enp7s0 -s MyWifi -p mypassword -c 36 -b a
+sudo hotspotctl -m -i wlp8s0 -u enp7s0 -s MyWifi -p mypassword -c 36 -b a -r IN
 ```
 
 **Stop:** `Ctrl+C` — system is fully restored.
@@ -70,6 +70,9 @@ sudo hotspotctl -m -i wlp8s0 -u enp7s0 -s MyWifi -p mypassword -c 36 -b a
   -p <pass>   password              (min 8 chars)
   -c <ch>     channel               (e.g. 6, 36, 48)
   -b <band>   band: g=2.4GHz a=5GHz (e.g. -b a)
+  -r <region> region/country code   (e.g. -r IN)
+  -d          debug mode (optional)
+  
 ```
 
 ---
