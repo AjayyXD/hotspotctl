@@ -3,5 +3,6 @@
 #include "hostapd.h"
 
 HotspotConfig get_cli_cfg(int argc,char* charv[]);
+int start_parse(HotspotConfig *cfg, int argc, char *argv[]);
 
 #endif

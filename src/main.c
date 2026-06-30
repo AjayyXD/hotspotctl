@@ -17,11 +17,13 @@ int pid1 = -1,pid2 = -1;
 char iface[32];
 int modified_env = 0;
 int activated_firewall = 0;
+int isDaemon = 0;
 
 void cleanup(){
 
     static int check = 0;
     if(check){return;}
+    if(!isDaemon){return;}
     check = 1;
 
     if(pid1>0) {kill(pid1,SIGTERM);}
@@ -69,20 +71,55 @@ void handle_signal_interrupt(int signal_number){
     exit(0);
 }
 
+void daemonize()
+{
+    pid_t pid = fork();
+    if (pid < 0)
+    {
+        fprintf(stderr, "Failed to fork\n");
+        exit(1);
+    }
+    if (pid > 0)
+    {
+        exit(0);
+    }
+
+    if (setsid() < 0)
+    {
+        fprintf(stderr, "Setsid failed\n");
+        exit(1);
+    }
+    pid = fork();
+    if (pid > 0)
+    {
+        exit(0);
+    }
+    int devnull = open("/dev/null", O_RDWR);
+    dup2(devnull, STDIN_FILENO);
+    dup2(devnull, STDOUT_FILENO);
+    dup2(devnull, STDERR_FILENO);
+    close(devnull);
+
+    chdir("/");
+}
+
 int main(int argc,char* argv[])
 {
+    
     //Check for root access
     if(geteuid() != 0){
         fprintf(stderr,"Hotspotctl requires root privileges.\n");
         fprintf(stderr,"Please run it again using : sudo %s\n",argv[0]);
         return 1;
     }
-
+    
     //Handle program exit
     if(atexit(cleanup)!=0){
         fprintf(stderr,"Failed to clean up\n");
         return 1;
     }
+    mkdir("/run/hotspotctl", 0755);
+    
 
     struct sigaction response_action;
     response_action.sa_handler = handle_signal_interrupt;
@@ -91,22 +128,60 @@ int main(int argc,char* argv[])
     sigaction(SIGINT, &response_action, NULL);
     sigaction(SIGTERM, &response_action, NULL);
     sigaction(SIGHUP, &response_action,NULL);
+
     
+
     //Prepare configuration
     HotspotConfig cfg = get_cli_cfg(argc,argv);
-    strcpy(iface,cfg.iface);
+    
 
-    //Flag altered env
-    if(prepare_environment(cfg)==0){
+    if(strcmp(argv[1],"start")==0){
+        start_parse(&cfg,argc,argv);
+    }
+    else if (strcmp(argv[1], "stop") == 0)
+    {
+        FILE *f = fopen("/run/hotspotctl/hotspotctl.pid", "r");
+        if (!f)
+        {
+            fprintf(stderr, "Error, could not open file\n");
+            return 1;
+        }
+        char line[32];
+        fgets(line, sizeof(line), f);
+        pid_t pid = atoi(line);
+        if (pid <= 0)
+        {
+            fprintf(stderr, "Error, invalid pid\n");
+            return 1;
+        }
+
+        if (kill(pid, SIGTERM) == 0)
+        {
+            fprintf(stdout, "Hotspotctl going down\n");
+        }
+        else
+        {
+            fprintf(stdout, "Failed to stop\n");
+        }
+        return 0;
+    }
+
+    strcpy(iface, cfg.iface);
+
+    // Flag altered env
+    if (prepare_environment(cfg) == 0)
+    {
         modified_env = 1;
     }
-    
-    if(create_hostapd_conf(&cfg)){
-        fprintf(stderr,"An error occurred while creating hostapd.conf\n");
+
+    if (create_hostapd_conf(&cfg))
+    {
+        fprintf(stderr, "An error occurred while creating hostapd.conf\n");
         exit(1);
     }
-    if(create_dnsmasq_conf(&cfg)){
-        fprintf(stderr,"An error occurred while creating dnsmasq.conf\n");
+    if (create_dnsmasq_conf(&cfg))
+    {
+        fprintf(stderr, "An error occurred while creating dnsmasq.conf\n");
         exit(1);
     }
 
@@ -156,10 +231,27 @@ int main(int argc,char* argv[])
     printf("[*] Created Hotspot Successfully\n");
     printf("[*] Connection Name : %s\n",cfg.ssid);
     printf("[*] Password : %s\n",cfg.password);
-
+    if (strcmp(argv[1], "start") == 0)
+    {
+        daemonize();
+        isDaemon = 1;
+        FILE *f = fopen("/run/hotspotctl/hotspotctl.pid", "w");
+        if (f)
+        {
+            fprintf(f, "%d\n", getpid());
+            fclose(f);
+        }
+        else
+        {
+            fprintf(stderr, "No directory\n");
+        }
+        
+    }
+    
     //Keeping parent process alive while children processes still exist
-    wait(NULL);
-    wait(NULL);
+    while(1){
+        
+    }
     
 
     return 0;
