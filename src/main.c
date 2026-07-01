@@ -103,6 +103,44 @@ void daemonize()
     chdir("/");
 }
 
+int check_mode(HotspotConfig *cfg,int argc,char *argv[]){
+    if (strcmp(argv[1], "start") == 0)
+    {
+        start_parse(cfg, argc, argv);
+    }
+    else if (strcmp(argv[1], "stop") == 0)
+    {
+        FILE *f = fopen("/run/hotspotctl/hotspotctl.pid", "r");
+        if (!f)
+        {
+            fprintf(stderr, "Error, could not open file\n");
+            return 1;
+        }
+        char line[32];
+        fgets(line, sizeof(line), f);
+        pid_t pid = atoi(line);
+        if (pid <= 0)
+        {
+            fprintf(stderr, "Error, invalid pid\n");
+            return 1;
+        }
+
+        if (kill(pid, SIGTERM) == 0)
+        {
+            fprintf(stdout, "Hotspotctl going down\n");
+        }
+        else
+        {
+            fprintf(stdout, "Failed to stop\n");
+            return 1;
+        }
+        exit(0);
+        
+    }
+
+    return 0;
+}
+
 int main(int argc,char* argv[])
 {
     
@@ -135,35 +173,8 @@ int main(int argc,char* argv[])
     HotspotConfig cfg = get_cli_cfg(argc,argv);
     
 
-    if(strcmp(argv[1],"start")==0){
-        start_parse(&cfg,argc,argv);
-    }
-    else if (strcmp(argv[1], "stop") == 0)
-    {
-        FILE *f = fopen("/run/hotspotctl/hotspotctl.pid", "r");
-        if (!f)
-        {
-            fprintf(stderr, "Error, could not open file\n");
-            return 1;
-        }
-        char line[32];
-        fgets(line, sizeof(line), f);
-        pid_t pid = atoi(line);
-        if (pid <= 0)
-        {
-            fprintf(stderr, "Error, invalid pid\n");
-            return 1;
-        }
-
-        if (kill(pid, SIGTERM) == 0)
-        {
-            fprintf(stdout, "Hotspotctl going down\n");
-        }
-        else
-        {
-            fprintf(stdout, "Failed to stop\n");
-        }
-        return 0;
+    if(check_mode(&cfg,argc,argv)){
+        exit(1);
     }
 
     strcpy(iface, cfg.iface);
