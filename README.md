@@ -1,7 +1,4 @@
 
-
----
-
 ## What is hotspotctl?
 
 hotspotctl turns your Linux machine into a WiFi access point in one command.
