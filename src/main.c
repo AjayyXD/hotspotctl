@@ -140,6 +140,11 @@ int write_state(HotspotConfig cfg){
     fprintf(fp,"SSID : %s\n",cfg.ssid);
     fprintf(fp,"IFACE : %s\n",cfg.iface);
     fprintf(fp,"UPLINK : %s\n",cfg.uplink);
+    if(strcmp(cfg.hw_mode,"g")==0){
+        fprintf(fp,"BAND : 2.4GHz\n");
+    }else{
+        fprintf(fp,"BAND : 5GHz\n");
+    }
     fclose(fp);
     return 0;
 }
@@ -149,6 +154,21 @@ int root_access(char* argv[]){
         fprintf(stderr, "[-] Hotspotctl requires root privileges.\n");
         fprintf(stderr, "[-] Please run it again using : sudo %s\n", argv[0]);
         return 1;
+    }
+    return 0;
+}
+
+int status(){
+    char buffer[64];
+    FILE *fp = fopen("/run/hotspotctl/hotspotctl.state", "r");
+    if (fp == NULL)
+    {
+        fprintf(stderr, "[-] Error occured while fetching the state\n");
+        return 1;;
+    }
+    while (fgets(buffer, sizeof(buffer), fp) != NULL)
+    {
+        fprintf(stdout, buffer);
     }
     return 0;
 }
@@ -205,6 +225,9 @@ int check_mode(HotspotConfig *cfg,int argc,char *argv[]){
         
         get_connected_devices(iface);
         exit(0);
+    }else if(strcmp(argv[1],"--status") == 0){
+        int status_result = status();
+        exit(status_result);
     }
     else{
         fprintf(stdout,"[-] Unknown usage\n");
