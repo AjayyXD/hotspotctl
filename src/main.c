@@ -168,7 +168,7 @@ int status(){
     }
     while (fgets(buffer, sizeof(buffer), fp) != NULL)
     {
-        fprintf(stdout, buffer);
+        fprintf(stdout,"%s", buffer);
     }
     return 0;
 }
