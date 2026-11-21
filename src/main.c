@@ -163,8 +163,7 @@ int status(){
     FILE *fp = fopen("/run/hotspotctl/hotspotctl.state", "r");
     if (fp == NULL)
     {
-        fprintf(stderr, "[-] Error occured while fetching the state\n");
-        return 1;;
+        return 1;
     }
     while (fgets(buffer, sizeof(buffer), fp) != NULL)
     {
@@ -227,10 +226,14 @@ int check_mode(HotspotConfig *cfg,int argc,char *argv[]){
         exit(0);
     }else if(strcmp(argv[1],"--status") == 0){
         int status_result = status();
+        if(status_result == 1){
+            fprintf(stdout,"[*] hotspotctl is not running\n");
+        }
         exit(status_result);
     }
     else{
         fprintf(stdout,"[-] Unknown usage\n");
+        help();
         exit(1);
     }
 
